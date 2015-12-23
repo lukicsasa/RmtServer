@@ -2,7 +2,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-
 public class Server {
 
 	static int controlPort = 1908;
@@ -10,15 +9,16 @@ public class Server {
 	static ServerSocket dataSocket = null;
 	static ServerSocket controlSocket = null;
 	static Socket clientSocket = null;
-	
+
 	public static void main(String[] args) {
-		
+
 		try {
 			dataSocket = new ServerSocket(dataPort);
 			controlSocket = new ServerSocket(controlPort);
-			while(true) {
+			while (true) {
 				clientSocket = controlSocket.accept();
-				ServerThread serverThread = new ServerThread(clientSocket,dataSocket);
+				ServerThread serverThread = new ServerThread(clientSocket,
+						dataSocket);
 				serverThread.start();
 			}
 		} catch (IOException e) {

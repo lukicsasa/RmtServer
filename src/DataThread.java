@@ -2,10 +2,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.net.ServerSocket;
+import java.math.BigDecimal;
 import java.net.Socket;
 import java.util.LinkedList;
-
 
 public class DataThread extends Thread {
 
@@ -13,109 +12,117 @@ public class DataThread extends Thread {
 	PrintStream dataOutputStream = null;
 	Socket clientSocketData = null;
 	String operation = "";
-	double result;
+	BigDecimal result;
 	String regex = "[0-9 ]+";
 	String[] numbers;
-	
-	LinkedList<Integer> nums = new LinkedList<>();
-	
-	public DataThread(Socket clientSocketData,String operation) {
+
+	LinkedList<BigDecimal> nums = new LinkedList<>();
+
+	public DataThread(Socket clientSocketData, String operation) {
 		this.operation = operation;
 		this.clientSocketData = clientSocketData;
 	}
-	
-	public void run() {
-		try {
-			dataInputStream = new BufferedReader(new InputStreamReader(clientSocketData.getInputStream()));
-			dataOutputStream = new PrintStream(clientSocketData.getOutputStream());
-			while(true){
-			while(true){
-			String ans = dataInputStream.readLine();
-			if(ans.trim().equals("exit")) {
-				dataOutputStream.println("Goodbye!");
-				return;
-			}
-			numbers = ans.trim().split(" ");
 
-			if(numbers[0].matches(regex))
-				break;
-			else {
-				dataOutputStream.println("Please type in ONLY numbers:");
+	public void run() {
+		while (true) {
+			try {
+				dataInputStream = new BufferedReader(new InputStreamReader(
+						clientSocketData.getInputStream()));
+				dataOutputStream = new PrintStream(
+						clientSocketData.getOutputStream());
+				while (true) {
+					while (true) {
+						nums.clear();
+
+						String ans = dataInputStream.readLine();
+						if (ans.trim().equals("exit")) {
+							dataOutputStream.println("Goodbye!");
+							return;
+						}
+						numbers = ans.trim().split(" ");
+
+						if (numbers[0].matches(regex))
+							break;
+						else {
+							dataOutputStream
+									.println("Please type in ONLY numbers:");
+						}
+					}
+					for (int i = 0; i < numbers.length; i++) {
+						if (numbers[i].matches(regex)) {
+							BigDecimal n = new BigDecimal(numbers[i]);
+							nums.add(n);
+						}
+					}
+					switch (operation) {
+					case "+":
+						result = addition();
+						break;
+					case "-":
+						result = subtraction();
+						break;
+					case "*":
+						result = multiplication();
+						break;
+					case "/":
+						result = division();
+						break;
+					}
+
+					dataOutputStream.println("Your result is: " + result);
+					clientSocketData.close();
+					return;
+
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ArithmeticException e) {
+				dataOutputStream
+						.println("Calculator can't coprehand number that small or division by zero. Please type in your numbers again:");
 			}
+			try {
+				clientSocketData.close();
+				return;
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			for(int i = 0; i < numbers.length;i++) {
-				if(numbers[i].matches(regex))
-					nums.add(Integer.parseInt(numbers[i]));
-			}
-			switch (operation) {
-			case "+":
-				result = addition();
-				nums.clear();
-				break;
-			case "-":
-				result = subtraction();
-				nums.clear();
-				break;
-			case "*":
-				result = multiplication();
-				nums.clear();
-				break;
-			case "/":
-				result = division();
-				nums.clear();
-				break;
-			}
-			
-			if(result == Integer.MAX_VALUE) {
-				dataOutputStream.println("You can't divide by zero. Please type in your numbers again:");
-				continue;
-			}
-			else{
-				dataOutputStream.println("Your result is: "+result);
-				break;
-			}
-			}
-			clientSocketData.close();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
-		
 	}
 
-	private double division() {
-		double res = nums.getFirst();
+	private BigDecimal division() {
+		BigDecimal res = nums.getFirst();
 		for (int i = 0; i < nums.size(); i++) {
-			if(nums.get(i) == nums.getFirst())
+			if (nums.get(i) == nums.getFirst())
 				continue;
-			if(nums.get(i) == 0)
-				return Integer.MAX_VALUE;
-			res = res / nums.get(i);
+			res = res.divide(nums.get(i));
 		}
 		return res;
 	}
 
-	private double multiplication() {
-		int mul = 1;
+	private BigDecimal multiplication() {
+		BigDecimal mul = BigDecimal.valueOf(1);
 		for (int i = 0; i < nums.size(); i++) {
-			mul *= nums.get(i);
+			mul = mul.multiply(nums.get(i));
 		}
 		return mul;
 	}
 
-	private double subtraction() {
-		int res = nums.getFirst();
+	private BigDecimal subtraction() {
+		BigDecimal res = nums.getFirst();
 		for (int i = 0; i < nums.size(); i++) {
-			if(nums.get(i) == nums.getFirst())
+			if (nums.get(i) == nums.getFirst())
 				continue;
-			res -= nums.get(i);
+			res = res.subtract(nums.get(i));
 		}
 		return res;
 	}
 
-	private double addition() {
-		int sum = 0;
+	private BigDecimal addition() {
+		BigDecimal sum = BigDecimal.valueOf(0);
 		for (int i = 0; i < nums.size(); i++) {
-			sum += nums.get(i);
+			sum = sum.add(nums.get(i));
 		}
 		return sum;
 	}
