@@ -24,14 +24,15 @@ public class DataThread extends Thread {
 	}
 
 	public void run() {
-		while (true) {
 			try {
 				dataInputStream = new BufferedReader(new InputStreamReader(
 						clientSocketData.getInputStream()));
 				dataOutputStream = new PrintStream(
 						clientSocketData.getOutputStream());
 				while (true) {
+				try {
 					while (true) {
+						
 						nums.clear();
 
 						String ans = dataInputStream.readLine();
@@ -71,33 +72,28 @@ public class DataThread extends Thread {
 
 					dataOutputStream.println("Your result is: " + result);
 					clientSocketData.close();
-					return;
-
+					break;
+				} catch(ArithmeticException e) {
+					dataOutputStream
+					.println("Calculator can't coprehand division by zero. Please type in your numbers again:");
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (ArithmeticException e) {
-				dataOutputStream
-						.println("Calculator can't coprehand number that small or division by zero. Please type in your numbers again:");
-			}
-			try {
-				clientSocketData.close();
-				return;
-
+				}
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			
 		}
-	}
+	
 
 	private BigDecimal division() {
 		BigDecimal res = nums.getFirst();
 		for (int i = 0; i < nums.size(); i++) {
 			if (nums.get(i) == nums.getFirst())
 				continue;
-			res = res.divide(nums.get(i));
+			res = res.divide(nums.get(i),100,BigDecimal.ROUND_HALF_EVEN);
 		}
-		return res;
+		return res.stripTrailingZeros();
 	}
 
 	private BigDecimal multiplication() {
